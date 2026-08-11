@@ -1,43 +1,37 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-
 import connectDB from "./Database/db.js";
 import Route from "./Routes/route.js";
 
-const app = express();
-
-
-// Load environment variables
 dotenv.config();
 
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 // Middleware
 app.use(express.json());
 
 app.use(
-    cors({
-        origin: "http://localhost:5173",
-        credentials: true,
-    })
+  cors({
+    origin: CLIENT_URL,
+    credentials: true,
+  })
 );
-
 
 // Connect MongoDB
 connectDB();
 
-
 // Test route
 app.get("/", (req, res) => {
-    res.send("Hello World!");
+  res.send("Hello World!");
 });
 
-console.log("ented index")
 // User routes
 app.use("/api/user", Route);
 
-
-// Start server
-app.listen(3000, () => {
-    console.log("Server is running on http://localhost:3000");
-}); 
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

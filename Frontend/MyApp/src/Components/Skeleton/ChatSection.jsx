@@ -14,6 +14,7 @@ const ChatSection = () => {
     const [activeChat, setActiveChat] = useState(null);
 
     const chatEndRef = useRef(null);
+    const API_URL = import.meta.env.VITE_API_URL;
 
     // ==============================
     // FETCH CHATS
@@ -22,7 +23,7 @@ const ChatSection = () => {
     const fetchChats = async () => {
         try {
             const response = await axios.get(
-                "http://localhost:3000/api/user/chats"
+                `${API_URL}/api/user/chats`
             );
 
             const data = response.data.chats || [];
@@ -79,7 +80,7 @@ const ChatSection = () => {
 
         try {
             const response = await axios.post(
-                "http://localhost:3000/api/user/chat",
+                `${API_URL}/api/user/chat`,
                 {
                     text: userText,
                 }
@@ -125,7 +126,7 @@ const ChatSection = () => {
 
         try {
             await axios.delete(
-                "http://localhost:3000/api/user/chats"
+                `${API_URL}/api/user/chats`
             );
 
             setChats([]);

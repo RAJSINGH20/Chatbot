@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 
 const Registration = () => {
     const navigate = useNavigate();
+    const API_URL = import.meta.env.VITE_API_URL;
 
     const [formData, setFormData] = useState({
         username: "",
@@ -38,7 +39,7 @@ const Registration = () => {
 
         try {
             const response = await axios.post(
-                "http://localhost:3000/api/user/Registration",
+                `${API_URL}/api/user/Registration`,
                 {
                     username: formData.username,
                     email: formData.email,
