@@ -124,7 +124,7 @@ const Nav = () => {
                         PROFILE
                     ========================== */}
 
-                    <div className="relative">
+                    <div className="relative hidden sm:block">
 
                         <button
                             onClick={() =>

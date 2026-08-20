@@ -11,10 +11,26 @@ const ChatSection = () => {
     const [text, setText] = useState("");
     const [loading, setLoading] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
     const [activeChat, setActiveChat] = useState(null);
 
     const chatEndRef = useRef(null);
     const API_URL = import.meta.env.VITE_API_URL;
+
+    useEffect(() => {
+        const media = window.matchMedia("(max-width: 767px)");
+
+        const updateSidebar = (e) => {
+            setIsMobile(e.matches);
+            setSidebarOpen(!e.matches);
+        };
+
+        setIsMobile(media.matches);
+        setSidebarOpen(!media.matches);
+
+        media.addEventListener("change", updateSidebar);
+        return () => media.removeEventListener("change", updateSidebar);
+    }, []);
 
     // ==============================
     // FETCH CHATS
@@ -223,12 +239,23 @@ const ChatSection = () => {
                 SIDEBAR
             ================================= */}
 
+            {isMobile && sidebarOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/50 md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             <aside
                 className={`
                     ${
-                        sidebarOpen
-                            ? "w-[290px]"
-                            : "w-0"
+                        isMobile
+                            ? sidebarOpen
+                                ? "w-[290px] translate-x-0"
+                                : "w-0 -translate-x-full"
+                            : sidebarOpen
+                                ? "w-[290px]"
+                                : "w-0"
                     }
 
                     h-full
@@ -241,6 +268,10 @@ const ChatSection = () => {
                     duration-300
                     overflow-hidden
                     shrink-0
+                    max-md:fixed
+                    max-md:top-0
+                    max-md:left-0
+                    max-md:z-50
                 `}
             >
 
@@ -507,6 +538,50 @@ const ChatSection = () => {
 
                 </div>
 
+                {/* MOBILE PROFILE - only shown inside sidebar */}
+                <div className="md:hidden border-t border-[#302d28] p-4">
+                    <div className="flex items-center gap-3">
+                        <div
+                            className="
+                                w-10 h-10
+                                rounded-xl
+                                bg-[#c47b45]
+                                text-[#171614]
+                                flex items-center justify-center
+                                font-bold
+                                shrink-0
+                            "
+                        >
+                            U
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-[#e8e3da] truncate">
+                                User
+                            </p>
+                            <p className="text-[11px] text-[#746e66] truncate">
+                                AI Workspace
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setSidebarOpen(false)}
+                            className="
+                                w-8 h-8
+                                rounded-lg
+                                text-[#756e66]
+                                hover:bg-[#24211e]
+                                hover:text-[#e8e3da]
+                                transition
+                            "
+                            aria-label="Close sidebar"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+
                 {/* SIDEBAR FOOTER */}
 
                 <div
@@ -574,6 +649,7 @@ const ChatSection = () => {
                     "
                 >
 
+                    {/* Desktop sidebar toggle - unchanged */}
                     <button
                         onClick={() =>
                             setSidebarOpen(
@@ -581,6 +657,8 @@ const ChatSection = () => {
                             )
                         }
                         className="
+                            hidden
+                            md:flex
                             w-9
                             h-9
                             rounded-lg
@@ -591,6 +669,32 @@ const ChatSection = () => {
                             hover:text-[#e8e3da]
                             hover:border-[#4a443c]
                             transition
+                            items-center
+                            justify-center
+                        "
+                    >
+                        ☰
+                    </button>
+
+                    {/* Mobile sidebar button */}
+                    <button
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        aria-label="Open sidebar"
+                        className="
+                            flex
+                            md:hidden
+                            w-9
+                            h-9
+                            rounded-lg
+                            border
+                            border-[#302d28]
+                            bg-[#191816]
+                            text-[#827b72]
+                            hover:text-[#e8e3da]
+                            hover:border-[#4a443c]
+                            transition
+                            items-center
+                            justify-center
                         "
                     >
                         ☰
