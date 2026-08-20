@@ -4,7 +4,10 @@ import React, {
     useRef,
     useState,
 } from "react";
+
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const ChatSection = () => {
     const [chats, setChats] = useState([]);
@@ -15,7 +18,12 @@ const ChatSection = () => {
     const [activeChat, setActiveChat] = useState(null);
 
     const chatEndRef = useRef(null);
+
     const API_URL = import.meta.env.VITE_API_URL;
+
+    // =========================================================
+    // RESPONSIVE SIDEBAR
+    // =========================================================
 
     useEffect(() => {
         const media = window.matchMedia("(max-width: 767px)");
@@ -29,12 +37,18 @@ const ChatSection = () => {
         setSidebarOpen(!media.matches);
 
         media.addEventListener("change", updateSidebar);
-        return () => media.removeEventListener("change", updateSidebar);
+
+        return () => {
+            media.removeEventListener(
+                "change",
+                updateSidebar
+            );
+        };
     }, []);
 
-    // ==============================
+    // =========================================================
     // FETCH CHATS
-    // ==============================
+    // =========================================================
 
     const fetchChats = async () => {
         try {
@@ -61,9 +75,9 @@ const ChatSection = () => {
         fetchChats();
     }, []);
 
-    // ==============================
+    // =========================================================
     // AUTO SCROLL
-    // ==============================
+    // =========================================================
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({
@@ -71,18 +85,22 @@ const ChatSection = () => {
         });
     }, [activeChat, loading]);
 
-    // ==============================
+    // =========================================================
     // NEW CHAT
-    // ==============================
+    // =========================================================
 
     const handleNewChat = () => {
         setActiveChat(null);
         setText("");
+
+        if (isMobile) {
+            setSidebarOpen(false);
+        }
     };
 
-    // ==============================
+    // =========================================================
     // SEND MESSAGE
-    // ==============================
+    // =========================================================
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -115,7 +133,6 @@ const ChatSection = () => {
             ]);
 
             setActiveChat(newChat);
-
         } catch (error) {
             console.error(
                 "Chat Error:",
@@ -123,15 +140,14 @@ const ChatSection = () => {
             );
 
             setText(userText);
-
         } finally {
             setLoading(false);
         }
     };
 
-    // ==============================
+    // =========================================================
     // CLEAR HISTORY
-    // ==============================
+    // =========================================================
 
     const clearAllChats = async () => {
         const confirmDelete = window.confirm(
@@ -147,7 +163,6 @@ const ChatSection = () => {
 
             setChats([]);
             setActiveChat(null);
-
         } catch (error) {
             console.error(
                 "Delete Error:",
@@ -156,9 +171,9 @@ const ChatSection = () => {
         }
     };
 
-    // ==============================
+    // =========================================================
     // GROUP CHATS
-    // ==============================
+    // =========================================================
 
     const groupedChats = useMemo(() => {
         const today = new Date();
@@ -213,143 +228,422 @@ const ChatSection = () => {
         return groups;
     }, [chats]);
 
-    // ==============================
+    // =========================================================
     // CHAT TITLE
-    // ==============================
+    // =========================================================
 
     const getChatTitle = (chat) => {
         if (!chat?.userMessage) {
             return "New conversation";
         }
 
-        return chat.userMessage.length > 30
-            ? chat.userMessage.substring(0, 30) +
+        return chat.userMessage.length > 35
+            ? chat.userMessage.substring(0, 35) +
                   "..."
             : chat.userMessage;
     };
 
-    // ==============================
+    // =========================================================
+    // MARKDOWN COMPONENTS
+    // =========================================================
+
+    const markdownComponents = {
+        h1: ({ children }) => (
+            <h1 className="mb-4 mt-7 text-2xl font-semibold tracking-tight text-[#f1eee8]">
+                {children}
+            </h1>
+        ),
+
+        h2: ({ children }) => (
+            <h2 className="mb-3 mt-6 text-xl font-semibold tracking-tight text-[#f1eee8]">
+                {children}
+            </h2>
+        ),
+
+        h3: ({ children }) => (
+            <h3 className="mb-2 mt-5 text-base font-semibold text-[#eeeae3]">
+                {children}
+            </h3>
+        ),
+
+        h4: ({ children }) => (
+            <h4 className="mb-2 mt-4 text-sm font-semibold text-[#eeeae3]">
+                {children}
+            </h4>
+        ),
+
+        p: ({ children }) => (
+            <p className="mb-4 leading-7 text-[#c8c4bc]">
+                {children}
+            </p>
+        ),
+
+        ul: ({ children }) => (
+            <ul className="mb-4 ml-5 list-disc space-y-1.5">
+                {children}
+            </ul>
+        ),
+
+        ol: ({ children }) => (
+            <ol className="mb-4 ml-5 list-decimal space-y-1.5">
+                {children}
+            </ol>
+        ),
+
+        li: ({ children }) => (
+            <li className="pl-1">
+                {children}
+            </li>
+        ),
+
+        strong: ({ children }) => (
+            <strong className="font-semibold text-[#f1eee8]">
+                {children}
+            </strong>
+        ),
+
+        em: ({ children }) => (
+            <em className="text-[#ddd7ce]">
+                {children}
+            </em>
+        ),
+
+        blockquote: ({ children }) => (
+            <blockquote
+                className="
+                    my-5
+                    rounded-r-lg
+                    border-l-2
+                    border-[#d88a52]
+                    bg-[#d88a52]/[0.06]
+                    px-4
+                    py-3
+                    text-[#aaa59c]
+                "
+            >
+                {children}
+            </blockquote>
+        ),
+
+        hr: () => (
+            <hr className="my-6 border-white/[0.07]" />
+        ),
+
+        code: ({
+            inline,
+            children,
+        }) => {
+            if (inline) {
+                return (
+                    <code
+                        className="
+                            rounded-md
+                            border
+                            border-white/[0.07]
+                            bg-[#171715]
+                            px-1.5
+                            py-0.5
+                            font-mono
+                            text-[12px]
+                            text-[#e0a477]
+                        "
+                    >
+                        {children}
+                    </code>
+                );
+            }
+
+            return (
+                <code
+                    className="
+                        block
+                        font-mono
+                        text-[12px]
+                        leading-6
+                        text-[#d6d2cb]
+                    "
+                >
+                    {children}
+                </code>
+            );
+        },
+
+        pre: ({ children }) => (
+            <pre
+                className="
+                    my-5
+                    overflow-x-auto
+                    rounded-xl
+                    border
+                    border-white/[0.07]
+                    bg-[#080808]
+                    p-4
+                    shadow-[0_10px_35px_rgba(0,0,0,0.2)]
+                    scrollbar-thin
+                    scrollbar-track-transparent
+                    scrollbar-thumb-[#34332f]
+                "
+            >
+                {children}
+            </pre>
+        ),
+
+        table: ({ children }) => (
+            <div className="my-5 overflow-x-auto rounded-xl border border-white/[0.07]">
+                <table className="w-full border-collapse text-xs">
+                    {children}
+                </table>
+            </div>
+        ),
+
+        thead: ({ children }) => (
+            <thead className="bg-[#1a1a18]">
+                {children}
+            </thead>
+        ),
+
+        tbody: ({ children }) => (
+            <tbody>{children}</tbody>
+        ),
+
+        tr: ({ children }) => (
+            <tr className="transition-colors hover:bg-white/[0.02]">
+                {children}
+            </tr>
+        ),
+
+        th: ({ children }) => (
+            <th
+                className="
+                    border-b
+                    border-white/[0.07]
+                    px-4
+                    py-3
+                    text-left
+                    font-semibold
+                    text-[#eeeae3]
+                "
+            >
+                {children}
+            </th>
+        ),
+
+        td: ({ children }) => (
+            <td
+                className="
+                    border-b
+                    border-white/[0.05]
+                    px-4
+                    py-3
+                    text-[#aaa59c]
+                "
+            >
+                {children}
+            </td>
+        ),
+
+        a: ({
+            href,
+            children,
+        }) => (
+            <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                    text-[#df9764]
+                    underline-offset-4
+                    transition-colors
+                    hover:text-[#f0ad7c]
+                    hover:underline
+                "
+            >
+                {children}
+            </a>
+        ),
+    };
+
+    // =========================================================
     // UI
-    // ==============================
+    // =========================================================
 
     return (
-        <div className="h-screen bg-[#10100f] text-[#e8e3da] flex overflow-hidden">
+        <div
+            className="
+                flex
+                h-dvh
+                w-full
+                overflow-hidden
 
-            {/* =================================
-                SIDEBAR
-            ================================= */}
+                bg-[#0b0b0a]
+                text-[#f1eee8]
+
+                font-sans
+            "
+        >
+            {/* =================================================
+                MOBILE OVERLAY
+            ================================================= */}
 
             {isMobile && sidebarOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-black/50 md:hidden"
-                    onClick={() => setSidebarOpen(false)}
+                    className="
+                        fixed
+                        inset-0
+                        z-40
+
+                        bg-black/60
+                        backdrop-blur-[2px]
+
+                        md:hidden
+                    "
+                    onClick={() =>
+                        setSidebarOpen(false)
+                    }
                 />
             )}
 
+            {/* =================================================
+                SIDEBAR
+            ================================================= */}
+
             <aside
                 className={`
-                    ${
-                        isMobile
-                            ? sidebarOpen
-                                ? "w-[290px] translate-x-0"
-                                : "w-0 -translate-x-full"
-                            : sidebarOpen
-                                ? "w-[290px]"
-                                : "w-0"
-                    }
+                    fixed
+                    inset-y-0
+                    left-0
+                    z-50
 
-                    h-full
-                    bg-[#171614]
-                    border-r
-                    border-[#302d28]
                     flex
+                    h-full
+                    shrink-0
                     flex-col
+
+                    overflow-hidden
+
+                    border-r
+                    border-white/[0.06]
+
+                    bg-[#111110]/95
+
+                    shadow-[20px_0_60px_rgba(0,0,0,0.25)]
+
+                    backdrop-blur-xl
+
                     transition-all
                     duration-300
-                    overflow-hidden
-                    shrink-0
-                    max-md:fixed
-                    max-md:top-0
-                    max-md:left-0
-                    max-md:z-50
+                    ease-out
+
+                    md:relative
+                    md:z-auto
+
+                    ${
+                        sidebarOpen
+                            ? "w-[285px] translate-x-0"
+                            : "w-0 -translate-x-full md:w-0"
+                    }
                 `}
             >
+                {/* SIDEBAR HEADER */}
 
-                {/* LOGO */}
+                <div className="flex items-center gap-3 px-5 pb-4 pt-5">
+                    <div
+                        className="
+                            relative
+                            flex
+                            h-10
+                            w-10
+                            shrink-0
+                            items-center
+                            justify-center
+                            overflow-hidden
 
-                <div className="px-5 pt-5 pb-4">
+                            rounded-xl
 
-                    <div className="flex items-center gap-3">
+                            bg-gradient-to-br
+                            from-[#e3a06f]
+                            to-[#bd7041]
 
-                        <div
-                            className="
-                                w-10
-                                h-10
-                                rounded-xl
-                                bg-[#c47b45]
-                                text-[#171614]
-                                flex
-                                items-center
-                                justify-center
-                                font-black
-                                text-sm
-                                shadow-lg
-                                shadow-[#c47b45]/10
-                            "
-                        >
+                            text-sm
+                            font-black
+                            text-[#17100b]
+
+                            shadow-[0_8px_30px_rgba(216,138,82,0.18)]
+                        "
+                    >
+                        <span className="relative z-10">
                             AI
-                        </div>
+                        </span>
 
-                        <div>
-                            <h1 className="font-semibold text-[15px]">
-                                AI Workspace
-                            </h1>
-
-                            <p className="text-[11px] text-[#777169]">
-                                Your intelligent assistant
-                            </p>
-                        </div>
-
+                        <div className="absolute inset-0 bg-white/10" />
                     </div>
 
+                    <div className="min-w-0">
+                        <h1
+                            className="
+                                truncate
+                                text-[14px]
+                                font-semibold
+                                tracking-tight
+                                text-[#f1eee8]
+                            "
+                        >
+                            AI Workspace
+                        </h1>
+
+                        <p className="mt-0.5 text-[11px] text-[#77736b]">
+                            Your intelligent assistant
+                        </p>
+                    </div>
                 </div>
 
                 {/* NEW CHAT */}
 
-                <div className="px-4 pb-5">
+                <button
+                    onClick={handleNewChat}
+                    className="
+                        mx-4
+                        mb-5
+                        flex
+                        h-11
+                        w-[calc(100%-2rem)]
+                        items-center
+                        justify-center
+                        gap-2
 
-                    <button
-                        onClick={handleNewChat}
-                        className="
-                            w-full
-                            flex
-                            items-center
-                            justify-center
-                            gap-2
-                            px-4
-                            py-3
-                            rounded-xl
-                            bg-[#c47b45]
-                            text-[#171614]
-                            font-semibold
-                            text-sm
-                            hover:bg-[#d18a52]
-                            active:scale-[0.98]
-                            transition
-                        "
-                    >
-                        <span className="text-lg">
-                            +
-                        </span>
+                        rounded-xl
 
-                        New conversation
-                    </button>
+                        bg-[#d88a52]
 
-                </div>
+                        text-[13px]
+                        font-semibold
+                        text-[#1b120d]
+
+                        shadow-[0_8px_25px_rgba(216,138,82,0.12)]
+
+                        transition-all
+                        duration-200
+
+                        hover:bg-[#e39a62]
+                        hover:shadow-[0_10px_30px_rgba(216,138,82,0.18)]
+
+                        active:scale-[0.98]
+
+                        focus-visible:outline-none
+                        focus-visible:ring-2
+                        focus-visible:ring-[#d88a52]/50
+                    "
+                >
+                    <span className="text-lg leading-none">
+                        +
+                    </span>
+
+                    New conversation
+                </button>
 
                 {/* DIVIDER */}
 
-                <div className="mx-4 border-t border-[#302d28]" />
+                <div className="mx-4 h-px bg-white/[0.06]" />
 
                 {/* HISTORY */}
 
@@ -357,11 +651,15 @@ const ChatSection = () => {
                     className="
                         flex-1
                         overflow-y-auto
+
                         px-4
                         py-5
+
+                        scrollbar-thin
+                        scrollbar-track-transparent
+                        scrollbar-thumb-[#302e29]
                     "
                 >
-
                     {Object.entries(
                         groupedChats
                     ).map(
@@ -369,7 +667,6 @@ const ChatSection = () => {
                             section,
                             sectionChats,
                         ]) => {
-
                             if (
                                 sectionChats.length ===
                                 0
@@ -382,37 +679,31 @@ const ChatSection = () => {
                                     key={section}
                                     className="mb-6"
                                 >
-
                                     <div
                                         className="
+                                            mb-2
                                             flex
                                             items-center
                                             gap-2
                                             px-2
-                                            mb-2
                                         "
                                     >
-
-                                        <span className="text-[10px] text-[#c47b45]">
-                                            ●
-                                        </span>
+                                        <span className="h-1.5 w-1.5 rounded-full bg-[#d88a52]" />
 
                                         <h3
                                             className="
                                                 text-[10px]
+                                                font-bold
                                                 uppercase
                                                 tracking-[0.18em]
-                                                font-bold
-                                                text-[#746e66]
+                                                text-[#716d65]
                                             "
                                         >
                                             {section}
                                         </h3>
-
                                     </div>
 
                                     <div className="space-y-1">
-
                                         {sectionChats
                                             .slice()
                                             .reverse()
@@ -424,156 +715,188 @@ const ChatSection = () => {
                                                         key={
                                                             chat._id
                                                         }
-                                                        onClick={() =>
+                                                        onClick={() => {
                                                             setActiveChat(
                                                                 chat
-                                                            )
-                                                        }
+                                                            );
+
+                                                            if (
+                                                                isMobile
+                                                            ) {
+                                                                setSidebarOpen(
+                                                                    false
+                                                                );
+                                                            }
+                                                        }}
                                                         className={`
                                                             group
-                                                            w-full
                                                             flex
+                                                            w-full
                                                             items-center
                                                             gap-3
-                                                            px-3
-                                                            py-3
+
                                                             rounded-xl
+                                                            border
+
+                                                            px-3
+                                                            py-2.5
+
                                                             text-left
-                                                            transition
+
+                                                            transition-all
+                                                            duration-150
 
                                                             ${
                                                                 activeChat?._id ===
                                                                 chat._id
-                                                                    ? "bg-[#292621] border border-[#403a33]"
-                                                                    : "border border-transparent hover:bg-[#211f1c]"
+                                                                    ? `
+                                                                        border-white/[0.08]
+                                                                        bg-[#20201d]
+                                                                        text-[#f1eee8]
+                                                                        shadow-sm
+                                                                    `
+                                                                    : `
+                                                                        border-transparent
+                                                                        text-[#8b877f]
+                                                                        hover:bg-[#191918]
+                                                                        hover:text-[#ded9d1]
+                                                                    `
                                                             }
                                                         `}
                                                     >
-
                                                         <div
                                                             className={`
-                                                                w-7
-                                                                h-7
-                                                                rounded-lg
                                                                 flex
+                                                                h-7
+                                                                w-7
+                                                                shrink-0
                                                                 items-center
                                                                 justify-center
-                                                                text-xs
-                                                                shrink-0
+
+                                                                rounded-lg
+
+                                                                text-[11px]
+                                                                font-semibold
+
+                                                                transition-colors
 
                                                                 ${
                                                                     activeChat?._id ===
                                                                     chat._id
-                                                                        ? "bg-[#c47b45] text-[#171614]"
-                                                                        : "bg-[#24211e] text-[#837b71]"
+                                                                        ? "bg-[#d88a52] text-[#1b120d]"
+                                                                        : "bg-[#242421] text-[#77736d] group-hover:bg-[#2a2925]"
                                                                 }
                                                             `}
                                                         >
                                                             ✦
                                                         </div>
 
-                                                        <span
-                                                            className={`
-                                                                truncate
-                                                                text-sm
-
-                                                                ${
-                                                                    activeChat?._id ===
-                                                                    chat._id
-                                                                        ? "text-[#e8e3da]"
-                                                                        : "text-[#918a81] group-hover:text-[#d8d2c8]"
-                                                                }
-                                                            `}
-                                                        >
+                                                        <span className="min-w-0 flex-1 truncate text-xs">
                                                             {getChatTitle(
                                                                 chat
                                                             )}
                                                         </span>
-
                                                     </button>
                                                 )
                                             )}
-
                                     </div>
-
                                 </div>
                             );
                         }
                     )}
 
-                    {/* EMPTY */}
+                    {/* EMPTY STATE */}
 
                     {chats.length === 0 && (
-                        <div className="text-center py-12">
-
+                        <div className="px-4 py-12 text-center">
                             <div
                                 className="
-                                    w-12
-                                    h-12
                                     mx-auto
-                                    rounded-2xl
-                                    border
-                                    border-[#302d28]
-                                    bg-[#1e1c19]
+                                    mb-4
                                     flex
+                                    h-12
+                                    w-12
                                     items-center
                                     justify-center
-                                    text-[#756e66]
-                                    mb-4
+
+                                    rounded-2xl
+
+                                    border
+                                    border-white/[0.07]
+
+                                    bg-[#1b1b19]
+
+                                    text-[#77736d]
                                 "
                             >
                                 ✦
                             </div>
 
-                            <p className="text-sm text-[#807970]">
+                            <p className="text-sm text-[#8a857d]">
                                 No conversations
                             </p>
 
-                            <p className="text-xs text-[#57524c] mt-1">
+                            <p className="mt-1 text-[11px] text-[#57534d]">
                                 Start your first chat
                             </p>
-
                         </div>
                     )}
-
                 </div>
 
-                {/* MOBILE PROFILE - only shown inside sidebar */}
-                <div className="md:hidden border-t border-[#302d28] p-4">
+                {/* MOBILE PROFILE */}
+
+                <div className="border-t border-white/[0.06] p-4 md:hidden">
                     <div className="flex items-center gap-3">
                         <div
                             className="
-                                w-10 h-10
-                                rounded-xl
-                                bg-[#c47b45]
-                                text-[#171614]
-                                flex items-center justify-center
-                                font-bold
+                                flex
+                                h-10
+                                w-10
                                 shrink-0
+                                items-center
+                                justify-center
+
+                                rounded-xl
+
+                                bg-[#d88a52]
+
+                                font-bold
+                                text-[#17100b]
                             "
                         >
                             U
                         </div>
 
                         <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-[#e8e3da] truncate">
+                            <p className="truncate text-sm font-semibold text-[#eeeae3]">
                                 User
                             </p>
-                            <p className="text-[11px] text-[#746e66] truncate">
+
+                            <p className="truncate text-[11px] text-[#716d65]">
                                 AI Workspace
                             </p>
                         </div>
 
                         <button
                             type="button"
-                            onClick={() => setSidebarOpen(false)}
+                            onClick={() =>
+                                setSidebarOpen(false)
+                            }
                             className="
-                                w-8 h-8
+                                flex
+                                h-8
+                                w-8
+                                items-center
+                                justify-center
+
                                 rounded-lg
-                                text-[#756e66]
-                                hover:bg-[#24211e]
-                                hover:text-[#e8e3da]
+
+                                text-[#77736d]
+
                                 transition
+
+                                hover:bg-[#242421]
+                                hover:text-[#eeeae3]
                             "
                             aria-label="Close sidebar"
                         >
@@ -584,72 +907,70 @@ const ChatSection = () => {
 
                 {/* SIDEBAR FOOTER */}
 
-                <div
-                    className="
-                        border-t
-                        border-[#302d28]
-                        p-4
-                    "
-                >
-
+                <div className="border-t border-white/[0.06] p-4">
                     <button
-                        onClick={
-                            clearAllChats
-                        }
+                        onClick={clearAllChats}
                         disabled={
                             chats.length === 0
                         }
                         className="
-                            w-full
                             flex
+                            w-full
                             items-center
                             gap-3
-                            px-3
-                            py-3
+
                             rounded-xl
-                            text-sm
-                            text-[#756e66]
-                            hover:bg-[#2a1c1a]
+
+                            px-3
+                            py-2.5
+
+                            text-xs
+                            text-[#77736d]
+
+                            transition-all
+
+                            hover:bg-red-500/[0.07]
                             hover:text-red-400
+
+                            disabled:cursor-not-allowed
                             disabled:opacity-30
-                            transition
                         "
                     >
-
-                        <span>
-                            🗑
-                        </span>
+                        <span>🗑</span>
 
                         Delete history
-
                     </button>
-
                 </div>
-
             </aside>
 
-            {/* =================================
+            {/* =================================================
                 MAIN
-            ================================= */}
+            ================================================= */}
 
-            <main className="flex-1 flex flex-col min-w-0">
-
-                {/* TOP NAV */}
+            <main className="flex min-w-0 flex-1 flex-col">
+                {/* HEADER */}
 
                 <header
                     className="
-                        h-[64px]
+                        z-20
                         flex
-                        items-center
-                        px-5
-                        border-b
-                        border-[#302d28]
-                        bg-[#121110]
+                        h-16
                         shrink-0
+                        items-center
+
+                        border-b
+                        border-white/[0.06]
+
+                        bg-[#0f0f0e]/90
+
+                        px-4
+                        backdrop-blur-xl
+
+                        md:px-5
                     "
                 >
+                    {/* DESKTOP TOGGLE */}
 
-                    {/* Desktop sidebar toggle - unchanged */}
                     <button
                         onClick={() =>
                             setSidebarOpen(
@@ -658,51 +979,90 @@ const ChatSection = () => {
                         }
                         className="
                             hidden
-                            md:flex
-                            w-9
                             h-9
-                            rounded-lg
-                            border
-                            border-[#302d28]
-                            bg-[#191816]
-                            text-[#827b72]
-                            hover:text-[#e8e3da]
-                            hover:border-[#4a443c]
-                            transition
+                            w-9
+                            shrink-0
+
                             items-center
                             justify-center
+
+                            rounded-lg
+                            border
+                            border-white/[0.07]
+
+                            bg-[#181817]
+
+                            text-[#77736d]
+
+                            transition-all
+
+                            hover:border-white/[0.12]
+                            hover:bg-[#20201e]
+                            hover:text-[#eeeae3]
+
+                            focus-visible:outline-none
+                            focus-visible:ring-2
+                            focus-visible:ring-[#d88a52]/40
+
+                            md:flex
                         "
+                        aria-label="Toggle sidebar"
                     >
                         ☰
                     </button>
 
-                    {/* Mobile sidebar button */}
+                    {/* MOBILE TOGGLE */}
+
                     <button
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        aria-label="Open sidebar"
+                        onClick={() =>
+                            setSidebarOpen(
+                                !sidebarOpen
+                            )
+                        }
                         className="
                             flex
-                            md:hidden
-                            w-9
                             h-9
-                            rounded-lg
-                            border
-                            border-[#302d28]
-                            bg-[#191816]
-                            text-[#827b72]
-                            hover:text-[#e8e3da]
-                            hover:border-[#4a443c]
-                            transition
+                            w-9
+                            shrink-0
+
                             items-center
                             justify-center
+
+                            rounded-lg
+                            border
+                            border-white/[0.07]
+
+                            bg-[#181817]
+
+                            text-[#77736d]
+
+                            transition-all
+
+                            hover:border-white/[0.12]
+                            hover:bg-[#20201e]
+                            hover:text-[#eeeae3]
+
+                            md:hidden
                         "
+                        aria-label="Open sidebar"
                     >
                         ☰
                     </button>
 
-                    <div className="ml-4">
+                    <div className="ml-3 min-w-0">
+                        <h2
+                            className="
+                                max-w-[250px]
+                                truncate
 
-                        <h2 className="text-sm font-semibold">
+                                text-[13px]
+                                font-semibold
+                                tracking-tight
+                                text-[#eeeae3]
+
+                                md:max-w-lg
+                            "
+                        >
                             {activeChat
                                 ? getChatTitle(
                                       activeChat
@@ -710,92 +1070,126 @@ const ChatSection = () => {
                                 : "New conversation"}
                         </h2>
 
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                            <span
+                                className="
+                                    h-1.5
+                                    w-1.5
+                                    rounded-full
 
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#c47b45]" />
+                                    bg-[#d88a52]
 
-                            <span className="text-[10px] text-[#716b63]">
+                                    shadow-[0_0_8px_rgba(216,138,82,0.5)]
+                                "
+                            />
+
+                            <span className="text-[10px] text-[#68645d]">
                                 AI Assistant
                             </span>
-
                         </div>
-
                     </div>
-
                 </header>
 
-                {/* CHAT AREA */}
+                {/* =================================================
+                    CHAT AREA
+                ================================================= */}
 
                 <div
                     className="
                         flex-1
                         overflow-y-auto
-                        bg-[#10100f]
+
+                        bg-[#0b0b0a]
+
+                        scrollbar-thin
+                        scrollbar-track-transparent
+                        scrollbar-thumb-[#292824]
                     "
                 >
-
                     <div
                         className="
-                            max-w-4xl
                             mx-auto
-                            px-5
-                            py-10
+                            w-full
+                            max-w-4xl
+
+                            px-4
+                            py-8
+
+                            md:px-6
+                            md:py-10
                         "
                     >
-
-                        {/* WELCOME */}
+                        {/* =================================================
+                            WELCOME
+                        ================================================= */}
 
                         {!activeChat &&
                             !loading && (
                                 <div
                                     className="
-                                        min-h-[60vh]
                                         flex
+                                        min-h-[60vh]
                                         flex-col
                                         items-center
                                         justify-center
+
+                                        px-4
+
                                         text-center
                                     "
                                 >
-
                                     <div
                                         className="
                                             relative
-                                            w-20
-                                            h-20
-                                            rounded-[24px]
-                                            bg-[#1b1917]
-                                            border
-                                            border-[#403a33]
+                                            mb-7
+
                                             flex
+                                            h-20
+                                            w-20
                                             items-center
                                             justify-center
-                                            mb-7
+
+                                            rounded-[24px]
+
+                                            border
+                                            border-white/[0.09]
+
+                                            bg-gradient-to-br
+                                            from-[#1c1c1a]
+                                            to-[#131312]
+
+                                            text-sm
+                                            font-black
+                                            text-[#d88a52]
+
+                                            shadow-[0_20px_50px_rgba(0,0,0,0.25)]
                                         "
                                     >
-
                                         <div
                                             className="
                                                 absolute
                                                 inset-2
+
                                                 rounded-[18px]
+
                                                 border
-                                                border-[#c47b45]/30
+                                                border-[#d88a52]/20
                                             "
                                         />
 
-                                        <span className="text-[#c47b45] font-black">
+                                        <span className="relative">
                                             AI
                                         </span>
-
                                     </div>
 
                                     <h2
                                         className="
                                             text-3xl
                                             font-semibold
-                                            tracking-tight
-                                            text-[#eee8df]
+                                            tracking-[-0.04em]
+                                            text-[#f1eee8]
+
+                                            md:text-[34px]
                                         "
                                     >
                                         What are you
@@ -805,8 +1199,12 @@ const ChatSection = () => {
                                     <p
                                         className="
                                             mt-3
+                                            max-w-md
+
                                             text-sm
-                                            text-[#777068]
+                                            leading-6
+
+                                            text-[#716d65]
                                         "
                                     >
                                         Ask anything and
@@ -814,16 +1212,7 @@ const ChatSection = () => {
                                         move forward.
                                     </p>
 
-                                    <div
-                                        className="
-                                            mt-8
-                                            flex
-                                            flex-wrap
-                                            justify-center
-                                            gap-2
-                                        "
-                                    >
-
+                                    <div className="mt-8 flex flex-wrap justify-center gap-2">
                                         {[
                                             "Explain something",
                                             "Write code",
@@ -841,80 +1230,102 @@ const ChatSection = () => {
                                                         )
                                                     }
                                                     className="
+                                                        rounded-full
+
+                                                        border
+                                                        border-white/[0.07]
+
+                                                        bg-[#141413]
+
                                                         px-4
                                                         py-2.5
-                                                        rounded-full
-                                                        border
-                                                        border-[#302d28]
-                                                        bg-[#171614]
-                                                        text-xs
-                                                        text-[#918a81]
-                                                        hover:border-[#c47b45]/50
-                                                        hover:text-[#d8d2c8]
-                                                        transition
+
+                                                        text-[11px]
+                                                        font-medium
+                                                        text-[#918c84]
+
+                                                        transition-all
+
+                                                        hover:-translate-y-0.5
+                                                        hover:border-[#d88a52]/40
+                                                        hover:bg-[#1b1b19]
+                                                        hover:text-[#e4dfd7]
+
+                                                        active:translate-y-0
                                                     "
                                                 >
                                                     {item}
                                                 </button>
                                             )
                                         )}
-
                                     </div>
-
                                 </div>
                             )}
 
-                        {/* CHAT */}
+                        {/* =================================================
+                            MESSAGES
+                        ================================================= */}
 
                         {activeChat && (
-                            <div className="space-y-10">
-
+                            <div className="flex flex-col gap-9">
                                 {/* USER */}
 
                                 <div className="flex justify-end">
-
                                     <div
                                         className="
-                                            max-w-[75%]
+                                            max-w-[85%]
+
                                             rounded-[20px]
                                             rounded-br-md
-                                            bg-[#c47b45]
-                                            text-[#171614]
-                                            px-5
-                                            py-3.5
-                                            text-sm
-                                            leading-6
+
+                                            bg-gradient-to-br
+                                            from-[#df925a]
+                                            to-[#ca7c48]
+
+                                            px-4
+                                            py-3
+
+                                            text-[13px]
                                             font-medium
-                                            shadow-lg
-                                            shadow-black/10
+                                            leading-6
+                                            text-[#1b120d]
+
+                                            shadow-[0_8px_25px_rgba(0,0,0,0.15)]
+
+                                            md:max-w-[75%]
+                                            md:px-5
                                         "
                                     >
                                         {
                                             activeChat.userMessage
                                         }
                                     </div>
-
                                 </div>
 
                                 {/* AI */}
 
-                                <div className="flex gap-4">
-
+                                <div className="flex items-start gap-3 md:gap-4">
                                     <div
                                         className="
-                                            w-9
-                                            h-9
-                                            rounded-xl
-                                            bg-[#1c1a18]
-                                            border
-                                            border-[#403a33]
                                             flex
+                                            h-9
+                                            w-9
+                                            shrink-0
                                             items-center
                                             justify-center
-                                            text-[10px]
+
+                                            rounded-xl
+
+                                            border
+                                            border-white/[0.08]
+
+                                            bg-[#1a1a18]
+
+                                            text-[9px]
                                             font-black
-                                            text-[#c47b45]
-                                            shrink-0
+                                            text-[#d88a52]
+
+                                            shadow-sm
                                         "
                                     >
                                         AI
@@ -922,125 +1333,158 @@ const ChatSection = () => {
 
                                     <div
                                         className="
-                                            max-w-[85%]
+                                            min-w-0
+
+                                            max-w-[calc(100%-3rem)]
+
                                             pt-1
-                                            text-sm
+
+                                            text-[13px]
                                             leading-7
-                                            text-[#c8c1b8]
-                                            whitespace-pre-wrap
+                                            text-[#c8c4bc]
+
+                                            md:text-sm
                                         "
                                     >
-                                        {
-                                            activeChat.aiResponse
-                                        }
+                                        <ReactMarkdown
+                                            remarkPlugins={[
+                                                remarkGfm,
+                                            ]}
+                                            components={
+                                                markdownComponents
+                                            }
+                                        >
+                                            {
+                                                activeChat.aiResponse
+                                            }
+                                        </ReactMarkdown>
                                     </div>
-
                                 </div>
-
                             </div>
                         )}
 
-                        {/* LOADING */}
+                        {/* =================================================
+                            LOADING
+                        ================================================= */}
 
                         {loading && (
-                            <div className="flex gap-4 mt-8">
-
+                            <div className="mt-8 flex items-start gap-3 md:gap-4">
                                 <div
                                     className="
-                                        w-9
-                                        h-9
-                                        rounded-xl
-                                        bg-[#1c1a18]
-                                        border
-                                        border-[#403a33]
                                         flex
+                                        h-9
+                                        w-9
+                                        shrink-0
                                         items-center
                                         justify-center
-                                        text-[10px]
+
+                                        rounded-xl
+
+                                        border
+                                        border-white/[0.08]
+
+                                        bg-[#1a1a18]
+
+                                        text-[9px]
                                         font-black
-                                        text-[#c47b45]
+                                        text-[#d88a52]
                                     "
                                 >
                                     AI
                                 </div>
 
-                                <div
-                                    className="
-                                        flex
-                                        items-center
-                                        gap-1.5
-                                    "
-                                >
+                                <div className="flex items-center gap-1.5 pt-3">
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#77736b]" />
 
-                                    <span className="w-2 h-2 rounded-full bg-[#8c8277] animate-pulse" />
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#77736b] [animation-delay:150ms]" />
 
-                                    <span className="w-2 h-2 rounded-full bg-[#8c8277] animate-pulse [animation-delay:150ms]" />
-
-                                    <span className="w-2 h-2 rounded-full bg-[#8c8277] animate-pulse [animation-delay:300ms]" />
-
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#77736b] [animation-delay:300ms]" />
                                 </div>
-
                             </div>
                         )}
 
                         <div ref={chatEndRef} />
-
                     </div>
-
                 </div>
 
-                {/* INPUT */}
+                {/* =================================================
+                    INPUT
+                ================================================= */}
 
                 <div
                     className="
-                        bg-[#121110]
+                        shrink-0
+
                         border-t
-                        border-[#302d28]
-                        px-5
-                        pt-4
-                        pb-3
+                        border-white/[0.06]
+
+                        bg-[#0f0f0e]/95
+
+                        px-3
+                        py-3
+
+                        backdrop-blur-xl
+
+                        md:px-5
                     "
                 >
-
                     <form
                         onSubmit={handleSubmit}
-                        className="
-                            max-w-4xl
-                            mx-auto
-                        "
+                        className="mx-auto w-full max-w-4xl"
                     >
-
                         <div
                             className="
                                 flex
                                 items-center
                                 gap-2
+
                                 rounded-2xl
+
                                 border
-                                border-[#403a33]
-                                bg-[#1b1917]
-                                px-3
-                                py-2
-                                focus-within:border-[#c47b45]/60
-                                transition
+                                border-white/[0.08]
+
+                                bg-[#191918]
+
+                                p-1.5
+
+                                shadow-[0_10px_35px_rgba(0,0,0,0.2)]
+
+                                transition-all
+                                duration-200
+
+                                focus-within:border-[#d88a52]/50
+                                focus-within:ring-4
+                                focus-within:ring-[#d88a52]/[0.06]
                             "
                         >
+                            {/* ATTACHMENT */}
 
                             <button
                                 type="button"
                                 className="
-                                    w-9
+                                    flex
                                     h-9
+                                    w-9
+                                    shrink-0
+                                    items-center
+                                    justify-center
+
                                     rounded-xl
-                                    text-[#777068]
-                                    hover:text-[#c47b45]
-                                    hover:bg-[#25221f]
-                                    text-xl
-                                    transition
+
+                                    text-lg
+                                    text-[#77736d]
+
+                                    transition-all
+
+                                    hover:bg-[#242421]
+                                    hover:text-[#d88a52]
                                 "
+                                aria-label="Add attachment"
                             >
                                 +
                             </button>
+
+                            {/* INPUT */}
 
                             <input
                                 type="text"
@@ -1053,17 +1497,27 @@ const ChatSection = () => {
                                 disabled={loading}
                                 placeholder="Ask anything..."
                                 className="
-                                    flex-1
                                     min-w-0
+                                    flex-1
+
                                     bg-transparent
+
+                                    px-2.5
+                                    py-2.5
+
+                                    text-[13px]
+                                    text-[#eeeae3]
+
                                     outline-none
-                                    px-2
-                                    py-3
-                                    text-sm
-                                    text-[#e8e3da]
-                                    placeholder:text-[#625d56]
+
+                                    placeholder:text-[#5f5b55]
+
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-50
                                 "
                             />
+
+                            {/* SEND */}
 
                             <button
                                 type="submit"
@@ -1072,47 +1526,55 @@ const ChatSection = () => {
                                     !text.trim()
                                 }
                                 className="
-                                    w-10
-                                    h-10
-                                    rounded-xl
-                                    bg-[#c47b45]
-                                    text-[#171614]
-                                    font-bold
                                     flex
+                                    h-10
+                                    w-10
+                                    shrink-0
                                     items-center
                                     justify-center
-                                    hover:bg-[#d18a52]
+
+                                    rounded-xl
+
+                                    bg-[#d88a52]
+
+                                    font-bold
+                                    text-[#1b120d]
+
+                                    shadow-[0_5px_15px_rgba(216,138,82,0.12)]
+
+                                    transition-all
+
+                                    hover:bg-[#e39a62]
+                                    hover:shadow-[0_7px_20px_rgba(216,138,82,0.18)]
+
                                     active:scale-95
-                                    disabled:bg-[#34302b]
-                                    disabled:text-[#625d56]
+
                                     disabled:cursor-not-allowed
-                                    transition
+                                    disabled:bg-[#34332f]
+                                    disabled:text-[#69655e]
+                                    disabled:shadow-none
                                 "
+                                aria-label="Send message"
                             >
                                 ↑
                             </button>
-
                         </div>
 
                         <p
                             className="
-                                text-center
-                                text-[10px]
-                                text-[#514c46]
                                 mt-2
+
+                                text-center
+                                text-[9px]
+                                text-[#4f4c47]
                             "
                         >
-                            AI may occasionally
-                            generate incorrect
-                            information.
+                            AI may occasionally generate
+                            incorrect information.
                         </p>
-
                     </form>
-
                 </div>
-
             </main>
-
         </div>
     );
 };
