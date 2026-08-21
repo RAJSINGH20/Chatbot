@@ -32,6 +32,7 @@ const ChatSection = () => {
     const API_URL =
         import.meta.env.VITE_API_URL;
 
+    console.log(API_URL)
     // ============================================================
     // RESPONSIVE SIDEBAR
     // ============================================================
@@ -70,25 +71,29 @@ const ChatSection = () => {
 
     const fetchChats = async () => {
         try {
-            const response = await axios.get(
-                `${API_URL}/api/user/chats`
-            );
+            console.log("API_URL:", API_URL);
 
-            const data =
-                response.data.chats || [];
+            const url = `${API_URL}/api/user/chats`;
+
+            console.log("Fetching:", url);
+
+            const response = await axios.get(url);
+
+            console.log("Fetch chats response:", response.data);
+
+            const data = response.data.chats || [];
 
             setChats(data);
 
             if (data.length > 0) {
-                setActiveChat(
-                    data[data.length - 1]
-                );
+                setActiveChat(data[data.length - 1]);
             }
         } catch (error) {
-            console.error(
-                "Error fetching chats:",
-                error
-            );
+            console.error("FETCH CHATS ERROR");
+            console.error("Message:", error.message);
+            console.error("Status:", error.response?.status);
+            console.error("Response:", error.response?.data);
+            console.error("URL:", error.config?.url);
         }
     };
 
@@ -635,10 +640,9 @@ const ChatSection = () => {
                     md:relative
                     md:z-auto
 
-                    ${
-                        sidebarOpen
-                            ? "w-[285px] translate-x-0"
-                            : "w-0 -translate-x-full md:w-0"
+                    ${sidebarOpen
+                        ? "w-[285px] translate-x-0"
+                        : "w-0 -translate-x-full md:w-0"
                     }
                 `}
             >
@@ -897,16 +901,15 @@ const ChatSection = () => {
                                                                 transition-all
                                                                 duration-150
 
-                                                                ${
-                                                                    active
-                                                                        ? `
+                                                                ${active
+                                                                    ? `
                                                                             border-[#713b91]/50
                                                                             bg-[#251133]
                                                                             text-[#f5eff8]
 
                                                                             shadow-[inset_3px_0_0_#b967ff]
                                                                         `
-                                                                        : `
+                                                                    : `
                                                                             border-transparent
                                                                             text-[#918398]
 
@@ -933,15 +936,14 @@ const ChatSection = () => {
                                                                     text-[11px]
                                                                     font-semibold
 
-                                                                    ${
-                                                                        active
-                                                                            ? `
+                                                                    ${active
+                                                                        ? `
                                                                                 bg-[#a855f7]
                                                                                 text-white
 
                                                                                 shadow-[0_0_12px_rgba(168,85,247,0.3)]
                                                                             `
-                                                                            : `
+                                                                        : `
                                                                                 bg-[#211229]
                                                                                 text-[#806d8d]
                                                                             `
@@ -1154,8 +1156,8 @@ const ChatSection = () => {
                         >
                             {activeChat
                                 ? getChatTitle(
-                                      activeChat
-                                  )
+                                    activeChat
+                                )
                                 : "New conversation"}
                         </h2>
 

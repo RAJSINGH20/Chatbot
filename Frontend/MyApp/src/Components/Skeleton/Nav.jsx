@@ -17,6 +17,7 @@ const ChatSection = () => {
     const chatEndRef = useRef(null);
 
     const API_URL = import.meta.env.VITE_API_URL;
+    console.log(API_URL)
 
     // ============================================================
     // RESPONSIVE SIDEBAR
@@ -248,9 +249,9 @@ const ChatSection = () => {
 
         return chat.userMessage.length > 32
             ? chat.userMessage.substring(
-                  0,
-                  32
-              ) + "..."
+                0,
+                32
+            ) + "..."
             : chat.userMessage;
     };
 
@@ -326,10 +327,9 @@ const ChatSection = () => {
                     md:relative
                     md:z-auto
 
-                    ${
-                        sidebarOpen
-                            ? "w-[285px] translate-x-0"
-                            : "w-0 -translate-x-full"
+                    ${sidebarOpen
+                        ? "w-[285px] translate-x-0"
+                        : "w-0 -translate-x-full"
                     }
                 `}
             >
@@ -592,9 +592,8 @@ const ChatSection = () => {
 
                                                                 transition-all
 
-                                                                ${
-                                                                    active
-                                                                        ? `
+                                                                ${active
+                                                                    ? `
                                                                             border-[#713b91]/50
 
                                                                             bg-[#251133]
@@ -603,7 +602,7 @@ const ChatSection = () => {
 
                                                                             shadow-[inset_3px_0_0_#b967ff]
                                                                         `
-                                                                        : `
+                                                                    : `
                                                                             border-transparent
 
                                                                             text-[#918398]
@@ -632,16 +631,15 @@ const ChatSection = () => {
                                                                     text-[11px]
                                                                     font-semibold
 
-                                                                    ${
-                                                                        active
-                                                                            ? `
+                                                                    ${active
+                                                                        ? `
                                                                                 bg-[#a855f7]
 
                                                                                 text-white
 
                                                                                 shadow-[0_0_12px_rgba(168,85,247,0.3)]
                                                                             `
-                                                                            : `
+                                                                        : `
                                                                                 bg-[#211229]
 
                                                                                 text-[#806d8d]
@@ -662,10 +660,9 @@ const ChatSection = () => {
 
                                                                     text-xs
 
-                                                                    ${
-                                                                        active
-                                                                            ? "text-[#f5eff8]"
-                                                                            : "text-[#918398] group-hover:text-[#eee7f2]"
+                                                                    ${active
+                                                                        ? "text-[#f5eff8]"
+                                                                        : "text-[#918398] group-hover:text-[#eee7f2]"
                                                                     }
                                                                 `}
                                                             >
@@ -971,8 +968,8 @@ const ChatSection = () => {
                         >
                             {activeChat
                                 ? getChatTitle(
-                                      activeChat
-                                  )
+                                    activeChat
+                                )
                                 : "New conversation"}
                         </h2>
 

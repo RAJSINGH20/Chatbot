@@ -10,8 +10,8 @@ const router = Router();
 
 router.post("/Registration", Registration);
 router.post("/login", Login);
-router.post("/chat", Chat);
+router.post("/chat", Chat);  // creating a new chats
 
-router.get("/chats", getChats);
+router.get("/chats", getChats);  // Show the Exsisting Chats
 
 export default router;

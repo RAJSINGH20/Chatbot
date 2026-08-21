@@ -114,6 +114,8 @@ export const Login = async (req, res) => {
 // ==================== AI CHAT ==================
 export const Chat = async (req, res) => {
     try {
+        console.log("entered in the new chats")
+
         const { text } = req.body;
 
         if (!text || text.trim() === "") {
@@ -123,12 +125,10 @@ export const Chat = async (req, res) => {
             });
         }
 
-        // Send user message to AI
         const response = await gptmodel(text);
 
         console.log("AI Response:", response);
 
-        // Store conversation in MongoDB
         const chat = await AI.create({
             userMessage: text,
             aiResponse: response,
@@ -149,10 +149,11 @@ export const Chat = async (req, res) => {
         });
     }
 };
-
 export const getChats = async (req, res) => {
     try {
-        const chats = await AI.find().sort({ createdAt: 1 });
+        console.log("entered in the getchats")
+        const chats = await AI.find()
+            .sort({ createdAt: 1 });
 
         return res.status(200).json({
             success: true,
@@ -160,7 +161,7 @@ export const getChats = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Get Chats Error:", error);
+        console.error("Fetch Chats Error:", error);
 
         return res.status(500).json({
             success: false,
