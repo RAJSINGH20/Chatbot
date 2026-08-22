@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const apiKey = process.env.OPENROUTER_API_KEY;
+const apiKey = process.env.Gorq_api_key;
 
 console.log(
     "OpenRouter Key:",
@@ -46,7 +46,7 @@ export const gptmodel = async (text) => {
 
         const response =
             await client.chat.completions.create({
-                model: "openai/gpt-4.1-mini",
+                model: "gpt-3.5-turbo",
 
                 messages: [
                     {
