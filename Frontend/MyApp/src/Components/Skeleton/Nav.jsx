@@ -120,8 +120,9 @@ const ChatSection = () => {
         setLoading(true);
 
         try {
+            const url = `${API_URL}/api/user/chat`
             const response = await axios.post(
-                `${API_URL}/api/user/chat`,
+                url,
                 {
                     text: userText,
                 }
